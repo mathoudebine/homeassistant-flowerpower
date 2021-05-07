@@ -15,9 +15,11 @@ _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'parrot_flowerpower'
 CONF_MAC = 'mac'
+CONF_NAME = 'name'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_MAC): cv.string,
+    vol.Required(CONF_NAME): cv.string,
 })
 
 MIN_TIME_BETWEEN_UPDATES = datetime.timedelta(minutes=15)
@@ -39,7 +41,8 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     """Setup the sensor platform."""
     _LOGGER.debug("Starting flowerpower")
     reader = FlowerPowerDataReader(config.get(CONF_MAC))
-    add_devices([ FlowerPowerSensorEntity(reader, key,name,unit,icon,device_class) for [key, name, unit, icon, device_class] in SENSOR_TYPES])
+    device_name = config.get(CONF_NAME)
+    add_devices([ FlowerPowerSensorEntity(reader,device_name,key,name,unit,icon,device_class) for [key, name, unit, icon, device_class] in SENSOR_TYPES])
 
 class FlowerPowerDataReader:
     def __init__(self, mac):
@@ -195,7 +198,7 @@ class FlowerPowerDataReader:
 class FlowerPowerSensorEntity(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self, reader, key, name, unit, icon, device_class):
+    def __init__(self, reader, device_name, key, name, unit, icon, device_class):
         """Initialize the sensor."""
         self._reader = reader
         self._key = key
@@ -203,11 +206,12 @@ class FlowerPowerSensorEntity(Entity):
         self._unit = unit
         self._icon = icon
         self._device_class = device_class
+        self._device_name = device_name
 
     @property
     def name(self):
         """Return the name of the sensor."""
-        return 'FlowerPower {}'.format(self._name)
+        return 'FlowerPower {} {}'.format(self._device_name, self._name)
 
     @property
     def icon(self):
@@ -231,7 +235,7 @@ class FlowerPowerSensorEntity(Entity):
 
     @property
     def unique_id(self):
-        return '{}-{}'.format(self._reader.mac, self._name)
+        return 'flowerpower-{}-{}'.format(self._device_name, self._name)
 
     def update(self):
         """Fetch new state data for the sensor.

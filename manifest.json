@@ -1,7 +1,8 @@
 {
 	"domain": "parrot_flowerpower",
+	"version": "1.0",
 	"name": "Parrot Flowerpower",
-	"documentation": "",
+	"documentation": "https://github.com/mathoudebine/homeassistant-flowerpower",
 	"dependencies": [],
 	"requirements": [],
 	"codeowners": [""]
