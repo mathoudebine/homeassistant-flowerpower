@@ -4,6 +4,6 @@
 	"name": "Parrot Flowerpower",
 	"documentation": "https://github.com/mathoudebine/homeassistant-flowerpower",
 	"dependencies": [],
-	"requirements": [],
+	"requirements": ["bluepy"],
 	"codeowners": [""]
 }

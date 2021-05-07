@@ -8,10 +8,7 @@ FlowerPower has very limited BLE technical documentantion, but for version 1. I 
 
 ## Dependencies
 
-Install Bluepy :
-
-    $ sudo apt-get install python3-pip libglib2.0-dev
-    $ sudo pip3 install bluepy
+Bluepy - will be installed automatically by HA core
 
 ## Installation
 
@@ -25,3 +22,13 @@ sensor:
     name: Green  # Shall be unique as it is used in entities IDs
 ```
 Then restart Home Assistant and if everything works, you'll have some new sensors.
+
+## Debug
+
+To add debug logs of the component, add the following to your `configuration.yaml`:
+```yaml
+logger:
+  default: warning
+  logs:
+    custom_components.homeassistant-flowerpower.sensor: debug
+```

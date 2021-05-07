@@ -33,20 +33,22 @@ SENSOR_TYPES = [
     ['calibrated_air_temperature', 'Calibrated Air Temperature', TEMP_CELSIUS, None, DEVICE_CLASS_TEMPERATURE],
     ['battery_level', 'Battery Level', '%', None, DEVICE_CLASS_BATTERY],
     ['calibrated_daily_light_integral', 'Calibrated Daily Light Integral', 'mol/m2/d', None, DEVICE_CLASS_ILLUMINANCE],
+    ['firmware', 'Firmware version', '', None, None],
 ]
 
 
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Setup the sensor platform."""
-    _LOGGER.debug("Starting flowerpower")
-    reader = FlowerPowerDataReader(config.get(CONF_MAC))
+    _LOGGER.debug("Add entities for " + DOMAIN + " sensor '" + config.get(CONF_NAME) + "' (" + config.get(CONF_MAC) + ")")
+    reader = FlowerPowerDataReader(config.get(CONF_MAC), config.get(CONF_NAME))
     device_name = config.get(CONF_NAME)
     add_devices([ FlowerPowerSensorEntity(reader,device_name,key,name,unit,icon,device_class) for [key, name, unit, icon, device_class] in SENSOR_TYPES])
 
 class FlowerPowerDataReader:
-    def __init__(self, mac):
+    def __init__(self, mac, name):
         self._mac = mac
+        self._name = name
         self._state = { }
 
     def get_data(self, key):
@@ -60,18 +62,18 @@ class FlowerPowerDataReader:
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
-        _LOGGER.debug("Flowerpower updating data")
+        _LOGGER.debug("Flowerpower '" + self._name + "' (" + self._mac + ") updating data")
         from bluepy.btle import UUID, Peripheral, Scanner,DefaultDelegate
         periph = None
         
         try:
     
             # Connect to device
-            _LOGGER.debug('Connecting')
+            _LOGGER.debug('Connecting...')
             periph = Peripheral(self._mac)
             
             if (periph is None):
-                _LOGGER.debug('Not connected')
+                _LOGGER.error('Not connected')
             else:
                 services=periph.getServices()
                     
@@ -79,9 +81,9 @@ class FlowerPowerDataReader:
 #    sensors.append(Sensor("Daily Light Integral"    , "39e1fa01-84a8-11e2-afba-0002a5d5c51b", '<H', "mol/m2/d\t", 1.0))
                 curr_val_char = periph.getCharacteristics(uuid=UUID("39e1fa01-84a8-11e2-afba-0002a5d5c51b"))[0]
                 if (curr_val_char is None):
-                    _LOGGER.debug('Not connected')
+                    _LOGGER.error('Not connected or cannot read daily_light_integral data')
                 else: 
-                    _LOGGER.debug('Reading data')
+                    _LOGGER.debug('Reading daily_light_integral data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
                     self._state['daily_light_integral'] = struct.unpack('H', rawdata)[0]
@@ -90,9 +92,9 @@ class FlowerPowerDataReader:
 #    sensors.append(Sensor("SOIL_EC"                 , "39e1fa02-84a8-11e2-afba-0002a5d5c51b", '<H', "\t", 1.0))
                 curr_val_char = periph.getCharacteristics(uuid=UUID("39e1fa02-84a8-11e2-afba-0002a5d5c51b"))[0]
                 if (curr_val_char is None):
-                    _LOGGER.debug('Not connected')
+                    _LOGGER.error('Not connected or cannot read soil_ec data')
                 else: 
-                    _LOGGER.debug('Reading data')
+                    _LOGGER.debug('Reading soil_ec data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
                     self._state['soil_ec'] = struct.unpack('H', rawdata)[0]
@@ -101,9 +103,9 @@ class FlowerPowerDataReader:
 #    sensors.append(Sensor("SOIL_TEMPERATURE"        , "39e1fa03-84a8-11e2-afba-0002a5d5c51b", '<H', "C\t", 1.0))
                 curr_val_char = periph.getCharacteristics(uuid=UUID("39e1fa03-84a8-11e2-afba-0002a5d5c51b"))[0]
                 if (curr_val_char is None):
-                    _LOGGER.debug('Not connected')
+                    _LOGGER.error('Not connected or cannot read soil_temperature data')
                 else: 
-                    _LOGGER.debug('Reading data')
+                    _LOGGER.debug('Reading soil_temperature data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
                     self._state['soil_temperature'] = struct.unpack('H', rawdata)[0]/32.0
@@ -112,9 +114,9 @@ class FlowerPowerDataReader:
 #                ['air_temperature', 'Air Temperature', TEMP_CELSIUS, None, DEVICE_CLASS_TEMPERATURE],
                 curr_val_char = periph.getCharacteristics(uuid=UUID("39e1fa04-84a8-11e2-afba-0002a5d5c51b"))[0]
                 if (curr_val_char is None):
-                    _LOGGER.debug('Not connected')
+                    _LOGGER.error('Not connected or cannot read air_temperature data')
                 else: 
-                    _LOGGER.debug('Reading data')
+                    _LOGGER.debug('Reading air_temperature data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
                     self._state['air_temperature'] = struct.unpack('H', rawdata)[0]/32.0
@@ -123,9 +125,9 @@ class FlowerPowerDataReader:
 #                ['soil_moisture', 'Soil Moisture', '%', None, DEVICE_CLASS_HUMIDITY],
                 curr_val_char = periph.getCharacteristics(uuid=UUID("39e1fa05-84a8-11e2-afba-0002a5d5c51b"))[0]
                 if (curr_val_char is None):
-                    _LOGGER.debug('Not connected')
+                    _LOGGER.error('Not connected or cannot read soil_moisture data')
                 else: 
-                    _LOGGER.debug('Reading data')
+                    _LOGGER.debug('Reading soil_moisture data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
                     self._state['soil_moisture'] = struct.unpack('H', rawdata)[0]/32.0
@@ -134,9 +136,9 @@ class FlowerPowerDataReader:
 #    sensors.append(Sensor("CALIBRATED_SOIL_MOISTURE", "39e1fa09-84a8-11e2-afba-0002a5d5c51b", 'f', "%\t", 1.0))
                 curr_val_char = periph.getCharacteristics(uuid=UUID("39e1fa09-84a8-11e2-afba-0002a5d5c51b"))[0]
                 if (curr_val_char is None):
-                    _LOGGER.debug('Not connected')
+                    _LOGGER.error('Not connected or cannot read calibrated_soil_moisture data')
                 else: 
-                    _LOGGER.debug('Reading data')
+                    _LOGGER.debug('Reading calibrated_soil_moisture data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
                     self._state['calibrated_soil_moisture'] = struct.unpack('f', rawdata)[0]
@@ -145,9 +147,9 @@ class FlowerPowerDataReader:
 #    sensors.append(Sensor("CALIBRATED_AIR_TEMP"     , "39e1fa0a-84a8-11e2-afba-0002a5d5c51b", 'f', "C\t", 1.0))
                 curr_val_char = periph.getCharacteristics(uuid=UUID("39e1fa0a-84a8-11e2-afba-0002a5d5c51b"))[0]
                 if (curr_val_char is None):
-                    _LOGGER.debug('Not connected')
+                    _LOGGER.error('Not connected or cannot read calibrated_air_temperature data')
                 else: 
-                    _LOGGER.debug('Reading data')
+                    _LOGGER.debug('Reading calibrated_air_temperature data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
                     self._state['calibrated_air_temperature'] = struct.unpack('f', rawdata)[0]
@@ -156,9 +158,9 @@ class FlowerPowerDataReader:
 #                ['battery_level', 'Battery Level', '%', None, DEVICE_CLASS_HUMIDITY],
                 curr_val_char = periph.getCharacteristics(uuid=UUID(0x2A19))[0]
                 if (curr_val_char is None):
-                    _LOGGER.debug('Not connected')
+                    _LOGGER.error('Not connected or cannot read battery_level data')
                 else: 
-                    _LOGGER.debug('Reading data')
+                    _LOGGER.debug('Reading battery_level data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
                     self._state['battery_level'] = struct.unpack('B', rawdata)[0]
@@ -167,9 +169,9 @@ class FlowerPowerDataReader:
 #    sensors.append(Sensor("CALIBRATED_DLI"          , "39e1fa0b-84a8-11e2-afba-0002a5d5c51b", 'f', "mol/m2/d\t", 1.0))
                 curr_val_char = periph.getCharacteristics(uuid=UUID("39e1fa0b-84a8-11e2-afba-0002a5d5c51b"))[0]
                 if (curr_val_char is None):
-                    _LOGGER.debug('Not connected')
+                    _LOGGER.error('Not connected or cannot read calibrated_daily_light_integral data')
                 else: 
-                    _LOGGER.debug('Reading data')
+                    _LOGGER.debug('Reading calibrated_daily_light_integral data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
                     self._state['calibrated_daily_light_integral'] = struct.unpack('f', rawdata)[0]
@@ -181,11 +183,22 @@ class FlowerPowerDataReader:
 #    sensors.append(Sensor("CALIBRATED_EA"           , "39e1fa0c-84a8-11e2-afba-0002a5d5c51b", 'f', "\t", 1.0))
 #    sensors.append(Sensor("CALIBRATED_ECB"          , "39e1fa0d-84a8-11e2-afba-0002a5d5c51b", 'f', "dS/m\t", 1.0))
 #    sensors.append(Sensor("CALIBRATED_EC_POROUS"    , "39e1fa0e-84a8-11e2-afba-0002a5d5c51b", 'f', "dS/m\t", 1.0))
+
+#    ['firmware', 'Firmware version', '', None, None],
 #    sensors.append(Sensor("Firmware"                , UUID(0x2A26), 'HBBBBB', "\t", 1.0))
+                curr_val_char = periph.getCharacteristics(uuid=UUID(0x2A26))[0]
+                if (curr_val_char is None):
+                    _LOGGER.error('Not connected or cannot read firmware data')
+                else: 
+                    _LOGGER.debug('Reading firmware data')
+                    rawdata = curr_val_char.read()
+                    _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
+                    self._state['firmware'] = struct.unpack(str(len(rawdata))+'s', rawdata)[0].decode("utf-8")[:-1]
+                    _LOGGER.debug("Decoded data:{}".format(self._state['firmware'])
 
                 
-        except :
-            _LOGGER.debug('Not connected, error')
+        except Exception as e:
+            _LOGGER.error("Flowerpower '" + self._name + "' (" + self._mac + ") not connected, error : " + str(e))
 
 #            _LOGGER.debug('Resetting bluetooth')
 #            subprocess.Popen(["sudo", "systemctl", "restart", "bluetooth"]).wait(5)
