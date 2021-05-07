@@ -24,7 +24,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 
 MIN_TIME_BETWEEN_UPDATES = datetime.timedelta(minutes=15)
 SENSOR_TYPES = [
-    ['daily_light_integral', 'Daily Light Integral', 'mol/m2/d', None, DEVICE_CLASS_ILLUMINANCE],
+    ['light_intensity', 'Light Intensity', 'lx', None, DEVICE_CLASS_ILLUMINANCE],
     ['soil_ec', 'Soil EC', 'dS/m', None, None],
     ['soil_temperature', 'Soil Temperature', TEMP_CELSIUS, None, DEVICE_CLASS_TEMPERATURE],
     ['air_temperature', 'Air Temperature', TEMP_CELSIUS, None, DEVICE_CLASS_TEMPERATURE],
@@ -77,16 +77,16 @@ class FlowerPowerDataReader:
             else:
                 services=periph.getServices()
                     
-#                ['daily_light_integral', 'Daily Light Integral', 'mol/m2/d', None, None],
-#    sensors.append(Sensor("Daily Light Integral"    , "39e1fa01-84a8-11e2-afba-0002a5d5c51b", '<H', "mol/m2/d\t", 1.0))
+#    ['light_intensity', 'Light Intensity', 'lx', None, DEVICE_CLASS_ILLUMINANCE],
+#    sensors.append(Sensor("Light Intensity"    , "39e1fa01-84a8-11e2-afba-0002a5d5c51b", '<H', "lx\t", 1.0))
                 curr_val_char = periph.getCharacteristics(uuid=UUID("39e1fa01-84a8-11e2-afba-0002a5d5c51b"))[0]
                 if (curr_val_char is None):
-                    _LOGGER.error('Not connected or cannot read daily_light_integral data')
+                    _LOGGER.error('Not connected or cannot read light_intensity data')
                 else: 
-                    _LOGGER.debug('Reading daily_light_integral data')
+                    _LOGGER.debug('Reading light_intensity data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
-                    self._state['daily_light_integral'] = struct.unpack('H', rawdata)[0]
+                    self._state['light_intensity'] = struct.unpack('H', rawdata)[0]
                     
 #                ['soil_ec', 'Soil EC', 'dS/m', None, None],
 #    sensors.append(Sensor("SOIL_EC"                 , "39e1fa02-84a8-11e2-afba-0002a5d5c51b", '<H', "\t", 1.0))
@@ -108,7 +108,7 @@ class FlowerPowerDataReader:
                     _LOGGER.debug('Reading soil_temperature data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
-                    self._state['soil_temperature'] = struct.unpack('H', rawdata)[0]/32.0
+                    self._state['soil_temperature'] = round(struct.unpack('H', rawdata)[0]/32.0, 1)
 
 #    sensors.append(Sensor("AIR_TEMPERATURE"         , "39e1fa04-84a8-11e2-afba-0002a5d5c51b", '<H', "C\t", 1.0))
 #                ['air_temperature', 'Air Temperature', TEMP_CELSIUS, None, DEVICE_CLASS_TEMPERATURE],
@@ -119,7 +119,7 @@ class FlowerPowerDataReader:
                     _LOGGER.debug('Reading air_temperature data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
-                    self._state['air_temperature'] = struct.unpack('H', rawdata)[0]/32.0
+                    self._state['air_temperature'] = round(struct.unpack('H', rawdata)[0]/32.0, 1)
 
 #    sensors.append(Sensor("SOIL_MOISTURE"           , "39e1fa05-84a8-11e2-afba-0002a5d5c51b", '<H', "%\t", 1.0))
 #                ['soil_moisture', 'Soil Moisture', '%', None, DEVICE_CLASS_HUMIDITY],
@@ -130,7 +130,7 @@ class FlowerPowerDataReader:
                     _LOGGER.debug('Reading soil_moisture data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
-                    self._state['soil_moisture'] = struct.unpack('H', rawdata)[0]/32.0
+                    self._state['soil_moisture'] = round(struct.unpack('H', rawdata)[0]/32.0, 0)
 
 #                ['calibrated_soil_moisture', 'Calibrated Soil Moisture', '%', None, DEVICE_CLASS_HUMIDITY],
 #    sensors.append(Sensor("CALIBRATED_SOIL_MOISTURE", "39e1fa09-84a8-11e2-afba-0002a5d5c51b", 'f', "%\t", 1.0))
@@ -141,7 +141,7 @@ class FlowerPowerDataReader:
                     _LOGGER.debug('Reading calibrated_soil_moisture data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
-                    self._state['calibrated_soil_moisture'] = struct.unpack('f', rawdata)[0]
+                    self._state['calibrated_soil_moisture'] = round(struct.unpack('f', rawdata)[0],0)
 
 #                ['calibrated_air_temperature', 'Calibrated Air Temperature', TEMP_CELSIUS, None, DEVICE_CLASS_TEMPERATURE],
 #    sensors.append(Sensor("CALIBRATED_AIR_TEMP"     , "39e1fa0a-84a8-11e2-afba-0002a5d5c51b", 'f', "C\t", 1.0))
@@ -152,7 +152,7 @@ class FlowerPowerDataReader:
                     _LOGGER.debug('Reading calibrated_air_temperature data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
-                    self._state['calibrated_air_temperature'] = struct.unpack('f', rawdata)[0]
+                    self._state['calibrated_air_temperature'] = round(struct.unpack('f', rawdata)[0],1)
 
 #    sensors.append(Sensor("Battery"                 , UUID(0x2A19), 'B', "%\t", 1.0))
 #                ['battery_level', 'Battery Level', '%', None, DEVICE_CLASS_HUMIDITY],
@@ -174,12 +174,11 @@ class FlowerPowerDataReader:
                     _LOGGER.debug('Reading calibrated_daily_light_integral data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
-                    self._state['calibrated_daily_light_integral'] = struct.unpack('f', rawdata)[0]
+                    self._state['calibrated_daily_light_integral'] = round(struct.unpack('f', rawdata)[0],2)
 
 #    sensors.append(Sensor("LIVE_MODE_PERIOD"        , "39e1fa06-84a8-11e2-afba-0002a5d5c51b", '<H', "%\t", 1.0))
 #    sensors.append(Sensor("LED"                     , "39e1fa07-84a8-11e2-afba-0002a5d5c51b", '<H', "%\t", 1.0))
 #    sensors.append(Sensor("LAST_MOVE_DATE"          , "39e1fa08-84a8-11e2-afba-0002a5d5c51b", '<H', "%\t", 1.0))
-#    sensors.append(Sensor("CALIBRATED_DLI"          , "39e1fa0b-84a8-11e2-afba-0002a5d5c51b", 'f', "mol/m2/d\t", 1.0))
 #    sensors.append(Sensor("CALIBRATED_EA"           , "39e1fa0c-84a8-11e2-afba-0002a5d5c51b", 'f', "\t", 1.0))
 #    sensors.append(Sensor("CALIBRATED_ECB"          , "39e1fa0d-84a8-11e2-afba-0002a5d5c51b", 'f', "dS/m\t", 1.0))
 #    sensors.append(Sensor("CALIBRATED_EC_POROUS"    , "39e1fa0e-84a8-11e2-afba-0002a5d5c51b", 'f', "dS/m\t", 1.0))
@@ -193,10 +192,9 @@ class FlowerPowerDataReader:
                     _LOGGER.debug('Reading firmware data')
                     rawdata = curr_val_char.read()
                     _LOGGER.debug("Data:{}".format(' '.join(map(str, list(rawdata)))))
-                    self._state['firmware'] = struct.unpack(str(len(rawdata))+'s', rawdata)[0].decode("utf-8")[:-1]
-                    _LOGGER.debug("Decoded data:{}".format(self._state['firmware'])
+                    self._state['firmware'] = (struct.unpack(str(len(rawdata))+'s', rawdata)[0].decode("utf-8")[:-1])
+                    _LOGGER.debug("Decoded data:{}".format(self._state['firmware']))
 
-                
         except Exception as e:
             _LOGGER.error("Flowerpower '" + self._name + "' (" + self._mac + ") not connected, error : " + str(e))
 
