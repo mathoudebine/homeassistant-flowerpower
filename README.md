@@ -23,6 +23,22 @@ sensor:
 ```
 Then restart Home Assistant and if everything works, you'll have some new sensors.
 
+To add a [Plant monitor](https://www.home-assistant.io/integrations/plant/) from your FlowerPower sensor :
+
+```yaml
+# Create plants entities from sensors of FlowerPower
+plant:
+  name_of_your_plant:
+    sensors:
+      moisture: sensor.flowerpower_{sensor name}_calibrated_soil_moisture
+      battery: sensor.flowerpower_{sensor name}_battery_level
+      temperature: sensor.flowerpower_{sensor name}_calibrated_air_temperature
+      conductivity: sensor.flowerpower_{sensor name}_soil_ec
+      brightness: sensor.flowerpower_{sensor name}_light_intensity
+```
+
+After a restart, you can then add a [Plant status card](https://www.home-assistant.io/lovelace/plant-status/) to your dashboard
+
 ## Debug
 
 To add debug logs of the component, add the following to your `configuration.yaml`:
